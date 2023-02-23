@@ -16,7 +16,12 @@ import (
 )
 
 var (
-	templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+	tmplDir = "tmpl"
+	// When parsing multiple files with the same name in different directories,
+	// the last one mentioned will be the one that results.
+	// For instance, ParseFiles("a/foo", "b/foo") stores "b/foo" as the template
+	// named "foo", while "a/foo" is unavailable.
+	templates = template.Must(template.ParseFiles(tmplDir+"/edit.html", tmplDir+"/view.html"))
 	validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 )
 
@@ -53,6 +58,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, page *Page) {
 	// }
 
 	// version 2 with cache
+	// just passing the filename is enough, not need to pass the full path
 	err := templates.ExecuteTemplate(w, tmpl+".html", page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

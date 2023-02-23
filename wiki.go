@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	dataDir = "data"
 	fileExt = ".txt"
 )
 
@@ -15,12 +16,12 @@ type Page struct {
 }
 
 func (p *Page) Save() error {
-	filename := p.Title + fileExt
+	filename := dataDir + "/" + p.Title + fileExt
 	return os.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
-	filename := title + fileExt
+	filename := dataDir + "/" + title + fileExt
 	body, err := os.ReadFile(filename)
 	if err != nil {
 		log.Println("load page error", err)
