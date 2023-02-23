@@ -7,15 +7,28 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 )
 
 var (
 	templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+	validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 )
+
+func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	m := validPath.FindStringSubmatch(r.URL.Path)
+	if m == nil {
+		http.NotFound(w, r)
+		return "", errors.New("invalid Page Title")
+	}
+	// the Title is the second subexpression
+	return m[2], nil
+}
 
 func renderTemplate(w http.ResponseWriter, tmpl string, page *Page) {
 	// version 1
@@ -41,7 +54,10 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/view/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	page, err := loadPage(title)
 	if err != nil {
 		// fmt.Fprintf(w, "404 - Page not found: %s", title)
@@ -61,7 +77,10 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/edit/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	page, err := loadPage(title)
 	if err != nil {
 		page = &Page{Title: title}
@@ -81,7 +100,10 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/edit/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	if err := p.Save(); err != nil {
