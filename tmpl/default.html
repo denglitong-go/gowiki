@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Gowiki!</title>
+</head>
+<body>
+  <h1>Wiki Pages</h1>
+  <div>
+      {{ range $pageName := . }}
+      <li><a href="/view/{{ $pageName }}">{{ $pageName }}</a></li>
+      {{ end }}
+  </div>
+</body>
+</html>

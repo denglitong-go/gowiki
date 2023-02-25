@@ -8,11 +8,12 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -21,7 +22,12 @@ var (
 	// the last one mentioned will be the one that results.
 	// For instance, ParseFiles("a/foo", "b/foo") stores "b/foo" as the template
 	// named "foo", while "a/foo" is unavailable.
-	templates = template.Must(template.ParseFiles(tmplDir+"/edit.html", tmplDir+"/view.html"))
+	templates = template.Must(template.ParseFiles(
+		tmplDir+"/header.html",
+		tmplDir+"/default.html",
+		tmplDir+"/edit.html",
+		tmplDir+"/view.html",
+	))
 	validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 )
 
@@ -65,8 +71,26 @@ func renderTemplate(w http.ResponseWriter, tmpl string, page *Page) {
 	}
 }
 
+// defaultHandler show a list of page to view
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Default page, your request path: %s", r.URL.Path)
+	// version 1
+	// fmt.Fprintf(w, "Default page, your request path: %s", r.URL.Path)
+
+	// version 2
+	entries, err := os.ReadDir(dataDir)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	pageNames := make([]string, len(entries))
+	for i, v := range entries {
+		pageNames[i] = strings.Split(v.Name(), ".")[0]
+	}
+
+	err = templates.ExecuteTemplate(w, "default.html", pageNames)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
